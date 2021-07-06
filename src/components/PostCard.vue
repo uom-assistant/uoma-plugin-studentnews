@@ -1,12 +1,12 @@
 <template>
   <article :class="{ 'no-img': img === '' }" class="card">
-    <a :href="href" target="_blank" rel="noopener noreferrer" :title="title" v-if="img !== ''">
-      <div class="img-container">
+    <a :href="href" target="_blank" rel="noopener noreferrer">
+      <div class="img-container" :title="title" v-if="img !== ''">
         <img :data-src="img" class="lazyload">
       </div>
+      <h1 v-html="title"/>
     </a>
     <div v-if="readingTime !== null" class="reading-time">{{ tf('readingTime', [readingTime]) }}</div>
-    <a :href="href" target="_blank" rel="noopener noreferrer"><h1 v-html="title"/></a>
     <p>{{ contentText }}</p>
     <footer>
       <div>
@@ -126,6 +126,11 @@ export default defineComponent({
         }
       }
     }
+    &:focus:not(:active):not(.focus-visible) {
+      & + .reading-time {
+        display: inline-block;
+      }
+    }
   }
   .reading-time {
     position: absolute;
@@ -182,7 +187,9 @@ export default defineComponent({
           padding: 3px 6px;
           font-size: 14px;
           margin-right: 5px;
-          &:hover {
+        }
+        &:hover, &:focus {
+          span {
             background: #D5D5D5;
             text-decoration: underline;
           }
@@ -204,14 +211,20 @@ export default defineComponent({
     .reading-time {
       background-color: #333333;
     }
-    h1 {
-      padding: 30px 20px 33px 20px;
-      width: calc(100% - 37px);
-      margin-top: 0;
-      font-size: 25px;
-      &:hover {
-        padding-left: 30px;
-        padding-right: 10px;
+    a {
+      h1 {
+        padding: 30px 20px 33px 20px;
+        width: calc(100% - 37px);
+        max-width: calc(100% - 37px);
+        display: block;
+        margin-top: 0;
+        font-size: 25px;
+      }
+      &:hover, &:focus:not(.focus-visible) {
+        h1 {
+          padding-left: 30px;
+          padding-right: 10px;
+        }
       }
     }
   }
@@ -245,7 +258,7 @@ body.dark .card {
         color: #EEEEEE;
         span {
           background: #333333;
-          &:hover {
+          &:hover, &:focus {
             background: #444444;
           }
         }

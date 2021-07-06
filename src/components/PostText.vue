@@ -67,7 +67,7 @@ export default defineComponent({
     font-weight: normal;
     margin: 0;
     font-size: 18px;
-    &:hover {
+    &:hover, &:focus {
       text-decoration: underline;
     }
   }

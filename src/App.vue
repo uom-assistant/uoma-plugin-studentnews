@@ -3,8 +3,8 @@
     <a href="https://studentnews.manchester.ac.uk/" target="_blank" rel="noopener noreferrer">My <span>Manchester</span> News</a>
     <div class="mode-switch">
       <div>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" class="mode-icon mode-card" :class="{ active: viewMode === 'card' }" @click="viewMode = 'card'"><title>{{ t('cardView') }}</title><path fill="#BBB" d="M0 0h474v1024H0zm550 0h474v1024H550z"/></svg>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" class="mode-icon mode-list" :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'"><title>{{ t('listView') }}</title><path fill="#BBB" d="M85 597h171V427H85v170zm0 256h171V683H85v170zm0-512h171V171H85v170zm256 256h598V427H341v170zm0 256h598V683H341v170zm0-682v170h598V171H341z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" class="mode-icon mode-card" :class="{ active: viewMode === 'card' }" @click="changeModeTo('card')" @keypress.enter="changeModeTo('card')" tabindex="0"><title>{{ t('cardView') }}</title><path fill="#BBB" d="M0 0h474v1024H0zm550 0h474v1024H550z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" class="mode-icon mode-list" :class="{ active: viewMode === 'list' }" @click="changeModeTo('list')" @keypress.enter="changeModeTo('list')" tabindex="0"><title>{{ t('listView') }}</title><path fill="#BBB" d="M85 597h171V427H85v170zm0 256h171V683H85v170zm0-512h171V171H85v170zm256 256h598V427H341v170zm0 256h598V683H341v170zm0-682v170h598V171H341z"/></svg>
       </div>
     </div>
   </header>
@@ -19,14 +19,15 @@
   </div>
   <footer class="foot-container" v-if="postList.length > 0" :class="{ end: noMore }">
     <div class="the-end" v-show="noMore">- {{ t('theEnd') }} -</div>
-    <div class="load-more" v-show="!noMore && !loading" @click="loadNextPage">{{ t('loadMore') }}</div>
+    <button class="load-more" v-show="!noMore && !loading" @click="loadNextPage">{{ t('loadMore') }}</button>
     <LoadingBar class="loading" v-if="loading"/>
   </footer>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
+import { defineComponent, nextTick, ref } from 'vue'
 import 'lazysizes'
+import 'focus-visible'
 
 import PostCard from './components/PostCard.vue'
 import PostText from './components/PostText.vue'
@@ -47,6 +48,12 @@ export default defineComponent({
     const { postList, page, loading, noMore, loadNextPage } = loadPosts()
 
     const viewMode = ref('card')
+    const changeModeTo = (mode: string) => {
+      viewMode.value = mode
+      nextTick(() => {
+        (document.querySelector('.card, .list')?.getElementsByTagName('a')[0] as HTMLElement).focus()
+      })
+    }
 
     return {
       localeName,
@@ -59,7 +66,8 @@ export default defineComponent({
       loading,
       noMore,
       loadNextPage,
-      viewMode
+      viewMode,
+      changeModeTo
     }
   }
 })
@@ -70,6 +78,9 @@ body {
   margin: 0;
   font-family: "Source Sans Pro", -apple-system, Noto Sans, Helvetica Neue, Helvetica, Nimbus Sans L, Arial, Liberation Sans, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Source Han Sans SC, Source Han Sans CN, Microsoft YaHei, Wenquanyi Micro Hei, WenQuanYi Zen Hei, ST Heiti, SimHei, WenQuanYi Zen Hei Sharp, sans-serif;
   background-color: #F5F5F5;
+  *:focus:not(.focus-visible) {
+    outline: 0;
+  }
   .header {
     font-family: 'Cinzel Decorative', cursive;
     width: 85%;
@@ -88,7 +99,7 @@ body {
       span {
         transition: color .3s;
       }
-      &:hover {
+      &:hover, &:focus {
         color: #202020;
       }
     }
@@ -129,7 +140,7 @@ body {
         }
       }
     }
-    &:hover {
+    &:hover, &:focus-within {
       padding: 30px 0 65px 0;
       a > span {
         color: #202020;
@@ -158,6 +169,8 @@ body {
       color: #CCCCCC;
     }
     .load-more {
+      -webkit-appearance: none;
+      font-family: 'Playfair Display', serif;
       font-size: 20px;
       background-color: #DDDDDD;
       color: #202020;
@@ -169,7 +182,7 @@ body {
       cursor: pointer;
       border: 0px solid #202020;
       transition: all .2s;
-      &:hover {
+      &:hover, &:focus {
         background-color: #CCCCCC;
         border-width: 3px;
         padding-top: 12px;
@@ -190,7 +203,7 @@ body {
       color: #444444;
       a {
         color: #444444;
-        &:hover {
+        &:hover, &:focus {
           color: #EEEEEE;
         }
       }
@@ -209,7 +222,7 @@ body {
           }
         }
       }
-      &:hover {
+      &:hover, &:focus {
         a > span {
           color: #EEEEEE;
         }
@@ -223,7 +236,7 @@ body {
         background-color: #333333;
         border-color:#EEEEEE;
         color: #EEEEEE;
-        &:hover {
+        &:hover, &:focus {
           background-color: #444444;
         }
       }

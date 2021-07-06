@@ -1,4 +1,4 @@
-import { onMounted, ref, Ref } from 'vue'
+import { nextTick, onMounted, ref, Ref } from 'vue'
 
 import { post, tag } from '@/types/post'
 
@@ -44,7 +44,7 @@ export default (): loadPosts => {
       postList.value.push({
         title: item.title.rendered,
         href: item.link,
-        img: item._embedded['wp:featuredmedia'] && item._embedded['wp:featuredmedia'][0] ? item._embedded['wp:featuredmedia'][0].source_url : '',
+        img: item._embedded['wp:featuredmedia'] && item._embedded['wp:featuredmedia'][0] && item._embedded['wp:featuredmedia'][0].source_url ? item._embedded['wp:featuredmedia'][0].source_url : '',
         date: item.date,
         content: item.excerpt.rendered,
         tags
@@ -54,10 +54,18 @@ export default (): loadPosts => {
     if (page.value >= parseInt(headers.get('x-wp-totalpages') || '0')) {
       noMore.value = true
     }
-    // noMore.value = true
 
     loading.value = false
     page.value += 1
+
+    if (page.value > 2) {
+      nextTick(() => {
+        const ele = document.querySelectorAll('.card, .list')[(page.value - 2) * 10]
+        if (ele) {
+          (ele as HTMLElement).getElementsByTagName('a')[0].focus()
+        }
+      })
+    }
   }
 
   onMounted(loadNextPage)
