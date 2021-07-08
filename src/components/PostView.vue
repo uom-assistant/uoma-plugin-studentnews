@@ -3,7 +3,7 @@
     <div class="head-img">
       <figure class="img-container" v-if="img.src !== ''">
         <img :data-src="img.src" class="lazyload" :key="img.src">
-        <figcaption v-html="cleanedCaption" v-if="cleanedCaption !== ''" :data-readingtime="readingTime === '' ? '' : tf('readingTime', [readingTime])" :class="{ 'has-readingtime': readingTime !== '' && !loading && cleanedCaption !== ''}"/>
+        <figcaption v-html="cleanedCaption" v-if="cleanedCaption !== ''" :data-readingtime="readingTime === '' ? '' : tf('readingTime', [readingTime])" :class="{ 'has-readingtime': readingTime !== '' && !loading && !error && cleanedCaption !== ''}"/>
       </figure>
       <button class="action-btn close" :title="t('close')" @click="$emit('close')">
         <svg viewBox="0 0 24 24">
@@ -31,16 +31,17 @@
         </svg>
       </a>
     </div>
-    <h1 v-html="title" :data-readingtime="readingTime === '' ? '' : tf('readingTime', [readingTime])" :class="{ 'has-readingtime': readingTime !== '' && !loading && cleanedCaption === ''}"/>
-    <LoadingBlock class="loading" v-if="loading"/>
-    <main v-html="content" class="markdown-body" v-else/>
-    <div class="tags" v-if="!loading">
+    <h1 v-html="title" :data-readingtime="readingTime === '' ? '' : tf('readingTime', [readingTime])" :class="{ 'has-readingtime': readingTime !== '' && !loading && !error && cleanedCaption === ''}"/>
+    <LoadingBlock class="loading" v-if="loading && !error"/>
+    <Error v-if="!loading && error" :localeString="localeString" @retry="load(linkRef)" class="error-block"/>
+    <main v-html="content" class="markdown-body" v-if="!loading && !error"/>
+    <div class="tags" v-if="!loading && !error">
       <div>
         <a v-for="(tag, index) in tags" :key="index" :href="tag.link" target="_blank" rel="noopener noreferrer"><span>{{ tag.name }}</span></a>
       </div>
       <time :datetime="date">{{ tf('published', tDate(new Date(date))) }}</time>
     </div>
-    <aside v-if="authors.length > 0 && !loading" class="author">
+    <aside v-if="authors.length > 0 && !loading && !error" class="author">
       <div>
         <h2>{{ authors.length > 1 ? t('authors') : t('author') }}</h2>
         <section v-for="(author, index) in authors" :key="index">
@@ -56,7 +57,7 @@
         </section>
       </div>
     </aside>
-    <footer v-if="!loading">
+    <footer v-if="!loading && !error">
       <a :href="previous.href" target="_blank" rel="noopener noreferrer" v-if="previous && previous.href !== ''" class="previous-a" @click.prevent="$emit('open:previous')">
         <article class="previous">
           <span>{{ t('previous') }}<span class="post-date">&nbsp;&nbsp;•&nbsp;&nbsp;{{ tDate(new Date(previous.date)) }}</span></span>
@@ -100,6 +101,7 @@
 import { defineComponent, onMounted, toRef, PropType, watch, ref } from 'vue'
 
 import LoadingBlock from '@/components/LoadingBlock.vue'
+import Error from '@/components/Error.vue'
 
 import i18n from '@/tools/i18n'
 import loadPost from '@/tools/loadPost'
@@ -112,7 +114,8 @@ export default defineComponent({
   name: 'PostView',
   emits: ['open:previous', 'open:next', 'close'],
   components: {
-    LoadingBlock
+    LoadingBlock,
+    Error
   },
   props: {
     localeString: {
@@ -157,19 +160,9 @@ export default defineComponent({
     const { cleanedCaption } = sanitize(toRef(props, 'img'), toRef(props, 'authors'))
 
     const showShare = ref(false)
-    const link = toRef(props, 'link')
+    const linkRef = toRef(props, 'link')
 
-    /**
-     * Open a post
-     * @param link post link
-     */
-    const open = (link: string) => {
-      content.value = ''
-      showShare.value = false
-      load(link)
-    }
-
-    watch(link, (newValue, oldValue) => {
+    watch(linkRef, (newValue, oldValue) => {
       // Refresh view when the URL changes
       if (newValue !== oldValue && /https:\/\/studentnews\.manchester\.ac\.uk\/wp-json\/wp\/v2\/posts\/\d{1,}/.test(newValue)) {
         showShare.value = false
@@ -179,7 +172,7 @@ export default defineComponent({
 
     onMounted(() => {
       // Load page when mounted
-      load(link.value)
+      load(linkRef.value)
     })
 
     return {
@@ -194,8 +187,8 @@ export default defineComponent({
       loading,
       error,
       load,
-      open,
-      cleanedCaption
+      cleanedCaption,
+      linkRef
     }
   }
 })
@@ -381,6 +374,10 @@ export default defineComponent({
       margin-top: 30px;
       padding: 0 30px;
     }
+  }
+  .error-block {
+    max-width: 200px;
+    margin: 80px auto 0 auto;
   }
   .markdown-body {
     font-family: "Source Sans Pro", -apple-system, Noto Sans, Helvetica Neue, Helvetica, Nimbus Sans L, Arial, Liberation Sans, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Source Han Sans SC, Source Han Sans CN, Microsoft YaHei, Wenquanyi Micro Hei, WenQuanYi Zen Hei, ST Heiti, SimHei, WenQuanYi Zen Hei Sharp, sans-serif;

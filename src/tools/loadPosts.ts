@@ -6,6 +6,7 @@ type loadPosts = {
   postList: Ref<post[]>,
   page: Ref<number>,
   loading: Ref<boolean>,
+  error: Ref<boolean>,
   noMore: Ref<boolean>,
   loadNextPage: (focus: boolean) => Promise<void>
 }
@@ -17,8 +18,10 @@ type loadPosts = {
 export default (): loadPosts => {
   const postList = ref<post[]>([])
   const page = ref(1)
-  const loading = ref(false)
   const noMore = ref(false)
+
+  const loading = ref(false)
+  const error = ref(false)
 
   /**
    * Load next page for post list
@@ -31,11 +34,23 @@ export default (): loadPosts => {
     }
 
     loading.value = true
+    error.value = false
 
     // Send request
     const { headers, response } = await fetch(`https://studentnews.manchester.ac.uk/wp-json/wp/v2/posts?_fields=id,date,title,link,excerpt,_links,_embedded&_embed=1&page=${page.value}`, {
       credentials: 'omit'
-    }).then((response) => ({ headers: response.headers, response }))
+    }).then((response) => ({ headers: response.headers, response })).catch(() => {
+      loading.value = false
+      error.value = true
+      return {
+        headers: new Headers(),
+        response: new Response()
+      }
+    })
+
+    if (error.value) {
+      return
+    }
 
     // Read result
     const result = await response.json()
@@ -90,6 +105,7 @@ export default (): loadPosts => {
     }
 
     loading.value = false
+    error.value = false
     page.value += 1
 
     // Focus the first post of the new page
@@ -110,6 +126,7 @@ export default (): loadPosts => {
     postList,
     page,
     loading,
+    error,
     noMore,
     loadNextPage
   }

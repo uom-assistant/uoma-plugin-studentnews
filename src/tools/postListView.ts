@@ -2,7 +2,7 @@ import { nextTick, ref, Ref } from 'vue'
 
 type postListView = {
   viewMode: Ref<string>,
-  changeModeTo: (mode: string) => void
+  changeModeTo: (mode: 'card' | 'list') => void
 }
 
 /**
@@ -10,13 +10,13 @@ type postListView = {
  * @returns data and method for changing the post list view
  */
 export default (): postListView => {
-  const viewMode = ref('card')
+  const viewMode = ref<'card' | 'list'>('card')
 
   /**
    * Change the view to the given mode
-   * @param mode target mode. Can be 'card' or 'list'
+   * @param mode target mode
    */
-  const changeModeTo = (mode: string) => {
+  const changeModeTo = (mode: 'card' | 'list') => {
     viewMode.value = mode
     nextTick(() => {
       // Focus on the first post in the list

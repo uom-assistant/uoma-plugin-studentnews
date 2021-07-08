@@ -8,20 +8,22 @@
       </div>
     </div>
   </header>
-  <div class="loading-container" v-if="loading && postList.length === 0">
-    <LoadingBar/>
+  <div class="loading-container" v-if="(loading || error) && postList.length === 0">
+    <LoadingBar v-if="loading && !error"/>
+    <Error v-if="!loading && error" :localeString="localeName" @retry="loadNextPage" class="error-block"/>
   </div>
   <PostView :title="selectedPost.title" :img="selectedPost.img" :date="selectedPost.date" :href="selectedPost.href" :link="selectedPost.link" :authors="selectedPost.authors" :tags="selectedPost.tags" :localeString="localeName" :next="next" :previous="previous" :class="{ opened: showPostViewAnimation, 'no-scroll': !postViewScroll }" v-if="selectedPost !== null" v-show="showPostView" @open:next="openPost(openedIndex - 1)" @open:previous="openPost(openedIndex + 1)" @close="closePost"/>
-  <main v-if="viewMode === 'card'">
+  <main v-if="viewMode === 'card' && postList.length > 0">
     <PostCard v-for="(post, index) of postList" :key="post.id" :title="post.title" :content="post.content" :img="post.img.src" :date="post.date" :href="post.href" :tags="post.tags" :localeString="localeName" :disaledTab="showPostView" @open="openPost(index)"/>
   </main>
-  <main v-else>
+  <main v-if="viewMode === 'list' && postList.length > 0">
     <PostText v-for="(post, index) of postList" :key="post.id" :title="post.title" :date="post.date" :href="post.href" :disaledTab="showPostView" :localeString="localeName" @open="openPost(index)"/>
   </main>
-  <footer class="foot-container" v-if="postList.length > 0" :class="{ end: noMore }">
+  <footer class="foot-container" v-if="postList.length > 0" :class="{ end: noMore, 'on-error': error }">
     <div class="the-end" v-show="noMore">- {{ t('theEnd') }} -</div>
-    <button class="load-more" v-show="!noMore && !loading" @click="loadNextPage(true)" :tabindex="showPostView ? '-1' : ''">{{ t('loadMore') }}</button>
-    <LoadingBar class="loading" v-if="loading"/>
+    <button class="load-more" v-show="!noMore && !loading && !error" @click="loadNextPage(true)" :tabindex="showPostView ? '-1' : ''">{{ t('loadMore') }}</button>
+    <LoadingBar class="loading" v-if="loading && !error"/>
+    <Error v-if="!loading && error" :localeString="localeName" @retry="loadNextPage" class="error-block-list"/>
   </footer>
 </template>
 
@@ -36,6 +38,7 @@ import PostCard from './components/PostCard.vue'
 import PostText from './components/PostText.vue'
 import LoadingBar from './components/LoadingBar.vue'
 import PostView from './components/PostView.vue'
+import Error from './components/Error.vue'
 
 import i18n from './tools/i18n'
 import loadPosts from './tools/loadPosts'
@@ -51,11 +54,12 @@ export default defineComponent({
     PostCard,
     PostText,
     LoadingBar,
-    PostView
+    PostView,
+    Error
   },
   setup () {
     const { localeName, locale, t, tf, tDate } = i18n()
-    const { postList, page, loading, noMore, loadNextPage } = loadPosts()
+    const { postList, page, loading, error, noMore, loadNextPage } = loadPosts()
     const { viewMode, changeModeTo } = postListView()
     const { dark } = darkMode()
     const { showPostView, showPostViewAnimation, postViewScroll, selectedPost, openPost, closePost, openedIndex, previous, next } = viewPost(postList, noMore, loadNextPage)
@@ -76,6 +80,7 @@ export default defineComponent({
       postList,
       page,
       loading,
+      error,
       noMore,
       loadNextPage,
       viewMode,
@@ -181,6 +186,9 @@ body {
     justify-content: center;
     align-items: center;
     height: calc(100vh - 195px);
+    .error-block {
+      width: 200px;
+    }
   }
   .foot-container {
     font-family: 'Playfair Display', serif;
@@ -216,6 +224,15 @@ body {
     }
     .loading {
       margin:26px 0;
+    }
+    .error-block-list {
+      margin: 0 auto;
+      width: calc(92% + 6px);
+      max-width: 706px;
+    }
+    &.on-error {
+      height: 120px;
+      margin-bottom: 40px;
     }
     &.end {
       height: 150px;

@@ -23,7 +23,9 @@ const languageList: languageList = {
       noNext: 'No next post',
       loading: 'Loading…',
       shareToFacebook: 'Share to Facebook',
-      shareToTwitter: 'Share to Twitter'
+      shareToTwitter: 'Share to Twitter',
+      loadError: 'Failed to load',
+      retry: 'Retry'
     }
   },
   zh: {
@@ -48,7 +50,9 @@ const languageList: languageList = {
       noNext: '没有下一篇了',
       loading: '加载中…',
       shareToFacebook: '分享到 Facebook',
-      shareToTwitter: '分享到 Twitter'
+      shareToTwitter: '分享到 Twitter',
+      loadError: '加载失败',
+      retry: '重试'
     }
   }
 }
