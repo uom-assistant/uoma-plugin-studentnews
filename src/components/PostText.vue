@@ -1,17 +1,19 @@
 <template>
   <article class="list">
-    <a :href="href" target="_blank" rel="noopener noreferrer"><h1 v-html="title"/></a>
+    <a :href="href" target="_blank" rel="noopener noreferrer" @click.prevent="$emit('open')" :tabindex="disaledTab ? '-1' : ''"><h1 v-html="title"/></a>
     <time :datetime="date">{{ tDate(new Date(date)) }}</time>
   </article>
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, toRef } from 'vue'
+import { defineComponent, toRef } from 'vue'
 
 import i18n from '@/tools/i18n'
+import watchLocale from '@/tools/watchLocale'
 
 export default defineComponent({
   name: 'PostCard',
+  emits: ['open'],
   props: {
     localeString: {
       type: String,
@@ -28,14 +30,15 @@ export default defineComponent({
     date: {
       type: String,
       required: true
+    },
+    disaledTab: {
+      type: Boolean,
+      required: true
     }
   },
   setup (props) {
     const { localeName, locale, t, tf, tDate } = i18n()
-
-    onMounted(() => {
-      localeName.value = toRef(props, 'localeString').value
-    })
+    watchLocale(toRef(props, 'localeString'), localeName)
 
     return {
       localeName,
@@ -50,8 +53,8 @@ export default defineComponent({
 
 <style scoped lang="less">
 .list {
-  width: calc(85% + 6px);
-  max-width: 606px;
+  width: calc(92% + 6px);
+  max-width: 706px;
   color: #202020;
   display: flex;
   justify-content: space-between;

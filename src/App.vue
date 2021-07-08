@@ -1,59 +1,71 @@
 <template>
   <header class="header">
-    <a href="https://studentnews.manchester.ac.uk/" target="_blank" rel="noopener noreferrer">My <span>Manchester</span> News</a>
+    <a href="https://studentnews.manchester.ac.uk/" target="_blank" rel="noopener noreferrer" :tabindex="showPostView ? '-1' : ''">My <span>Manchester</span> News</a>
     <div class="mode-switch">
       <div>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" class="mode-icon mode-card" :class="{ active: viewMode === 'card' }" @click="changeModeTo('card')" @keypress.enter="changeModeTo('card')" tabindex="0"><title>{{ t('cardView') }}</title><path fill="#BBB" d="M0 0h474v1024H0zm550 0h474v1024H550z"/></svg>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" class="mode-icon mode-list" :class="{ active: viewMode === 'list' }" @click="changeModeTo('list')" @keypress.enter="changeModeTo('list')" tabindex="0"><title>{{ t('listView') }}</title><path fill="#BBB" d="M85 597h171V427H85v170zm0 256h171V683H85v170zm0-512h171V171H85v170zm256 256h598V427H341v170zm0 256h598V683H341v170zm0-682v170h598V171H341z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" class="mode-icon mode-card" :class="{ active: viewMode === 'card' }" @click="changeModeTo('card')" @keypress.enter="changeModeTo('card')" :tabindex="showPostView ? '-1' : '0'"><title>{{ t('cardView') }}</title><path fill="#BBB" d="M0 0h474v1024H0zm550 0h474v1024H550z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" class="mode-icon mode-list" :class="{ active: viewMode === 'list' }" @click="changeModeTo('list')" @keypress.enter="changeModeTo('list')" :tabindex="showPostView ? '-1' : '0'"><title>{{ t('listView') }}</title><path fill="#BBB" d="M85 597h171V427H85v170zm0 256h171V683H85v170zm0-512h171V171H85v170zm256 256h598V427H341v170zm0 256h598V683H341v170zm0-682v170h598V171H341z"/></svg>
       </div>
     </div>
   </header>
   <div class="loading-container" v-if="loading && postList.length === 0">
     <LoadingBar/>
   </div>
-  <div v-if="viewMode === 'card'">
-    <PostCard v-for="(post, index) of postList" :key="index" :title="post.title" :content="post.content" :img="post.img" :date="post.date" :href="post.href" :tags="post.tags" :localeString="localeName"/>
-  </div>
-  <div v-else>
-    <PostText v-for="(post, index) of postList" :key="index" :title="post.title" :date="post.date" :href="post.href" :localeString="localeName"/>
-  </div>
+  <PostView :title="selectedPost.title" :img="selectedPost.img" :date="selectedPost.date" :href="selectedPost.href" :link="selectedPost.link" :authors="selectedPost.authors" :tags="selectedPost.tags" :localeString="localeName" :next="next" :previous="previous" :class="{ opened: showPostViewAnimation, 'no-scroll': !postViewScroll }" v-if="selectedPost !== null" v-show="showPostView" @open:next="openPost(openedIndex - 1)" @open:previous="openPost(openedIndex + 1)" @close="closePost"/>
+  <main v-if="viewMode === 'card'">
+    <PostCard v-for="(post, index) of postList" :key="post.id" :title="post.title" :content="post.content" :img="post.img.src" :date="post.date" :href="post.href" :tags="post.tags" :localeString="localeName" :disaledTab="showPostView" @open="openPost(index)"/>
+  </main>
+  <main v-else>
+    <PostText v-for="(post, index) of postList" :key="post.id" :title="post.title" :date="post.date" :href="post.href" :disaledTab="showPostView" :localeString="localeName" @open="openPost(index)"/>
+  </main>
   <footer class="foot-container" v-if="postList.length > 0" :class="{ end: noMore }">
     <div class="the-end" v-show="noMore">- {{ t('theEnd') }} -</div>
-    <button class="load-more" v-show="!noMore && !loading" @click="loadNextPage">{{ t('loadMore') }}</button>
+    <button class="load-more" v-show="!noMore && !loading" @click="loadNextPage(true)" :tabindex="showPostView ? '-1' : ''">{{ t('loadMore') }}</button>
     <LoadingBar class="loading" v-if="loading"/>
   </footer>
 </template>
 
 <script lang="ts">
-import { defineComponent, nextTick, ref } from 'vue'
+import { defineComponent, onMounted } from 'vue'
 import 'lazysizes'
 import 'focus-visible'
+
+import 'github-markdown-css'
 
 import PostCard from './components/PostCard.vue'
 import PostText from './components/PostText.vue'
 import LoadingBar from './components/LoadingBar.vue'
+import PostView from './components/PostView.vue'
 
 import i18n from './tools/i18n'
 import loadPosts from './tools/loadPosts'
+import postListView from './tools/postListView'
+import darkMode from './tools/darkMode'
+import viewPost from './tools/viewPost'
+
+import localeList from '@/tools/locales'
 
 export default defineComponent({
   name: 'App',
   components: {
     PostCard,
     PostText,
-    LoadingBar
+    LoadingBar,
+    PostView
   },
   setup () {
     const { localeName, locale, t, tf, tDate } = i18n()
     const { postList, page, loading, noMore, loadNextPage } = loadPosts()
+    const { viewMode, changeModeTo } = postListView()
+    const { dark } = darkMode()
+    const { showPostView, showPostViewAnimation, postViewScroll, selectedPost, openPost, closePost, openedIndex, previous, next } = viewPost(postList, noMore, loadNextPage)
 
-    const viewMode = ref('card')
-    const changeModeTo = (mode: string) => {
-      viewMode.value = mode
-      nextTick(() => {
-        (document.querySelector('.card, .list')?.getElementsByTagName('a')[0] as HTMLElement).focus()
-      })
-    }
+    onMounted(() => {
+      // Read initial settings from URl query
+      const urlParams = new URLSearchParams(window.location.search)
+      localeName.value = localeList[urlParams.get('locale') || 'en'] ? (urlParams.get('locale') || 'en') : 'en'
+      dark.value = (urlParams.get('dark') || 'false') === 'true'
+    })
 
     return {
       localeName,
@@ -67,7 +79,17 @@ export default defineComponent({
       noMore,
       loadNextPage,
       viewMode,
-      changeModeTo
+      changeModeTo,
+      dark,
+      showPostView,
+      showPostViewAnimation,
+      postViewScroll,
+      selectedPost,
+      openPost,
+      closePost,
+      openedIndex,
+      previous,
+      next
     }
   }
 })
@@ -81,10 +103,13 @@ body {
   *:focus:not(.focus-visible) {
     outline: 0;
   }
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
   .header {
     font-family: 'Cinzel Decorative', cursive;
     width: 85%;
-    max-width: 600px;
+    max-width: 700px;
     margin: 0 auto;
     text-align: center;
     font-size: 30px;
@@ -174,8 +199,8 @@ body {
       font-size: 20px;
       background-color: #DDDDDD;
       color: #202020;
-      width: calc(85% + 6px);
-      max-width: 606px;
+      width: calc(92% + 6px);
+      max-width: 706px;
       text-align: center;
       padding: 15px;
       box-sizing: border-box;
@@ -198,6 +223,7 @@ body {
     }
   }
   &.dark {
+    color-scheme: dark;
     background-color: #202020;
     .header {
       color: #444444;
@@ -242,5 +268,11 @@ body {
       }
     }
   }
+  &.lock-scroll {
+    overflow: hidden;
+  }
+}
+html.dark {
+    color-scheme: dark;
 }
 </style>

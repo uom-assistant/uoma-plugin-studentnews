@@ -9,11 +9,10 @@
 import { defineComponent } from 'vue'
 
 export default defineComponent({
-  name: 'LoadingBar'
+  name: 'LoadingBlock'
 })
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="less">
 @keyframes bar1 {
   0% {

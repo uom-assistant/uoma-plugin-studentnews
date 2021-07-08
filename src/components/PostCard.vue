@@ -1,6 +1,6 @@
 <template>
   <article :class="{ 'no-img': img === '' }" class="card">
-    <a :href="href" target="_blank" rel="noopener noreferrer">
+    <a :href="href" target="_blank" rel="noopener noreferrer" @click.prevent="$emit('open')" :tabindex="disaledTab ? '-1' : ''">
       <div class="img-container" :title="title" v-if="img !== ''">
         <img :data-src="img" class="lazyload">
       </div>
@@ -10,7 +10,7 @@
     <p>{{ contentText }}</p>
     <footer>
       <div>
-        <a v-for="(tag, index) in tags" :key="index" :href="tag.link" target="_blank" rel="noopener noreferrer"><span>{{ tag.name }}</span></a>
+        <a v-for="(tag, index) in tags" :key="index" :href="tag.link" target="_blank" rel="noopener noreferrer" :tabindex="disaledTab ? '-1' : ''"><span>{{ tag.name }}</span></a>
       </div>
       <time :datetime="date">{{ tDate(new Date(date)) }}</time>
     </footer>
@@ -18,14 +18,17 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, toRef, PropType } from 'vue'
+import { defineComponent, toRef, PropType } from 'vue'
 
 import i18n from '@/tools/i18n'
+import watchLocale from '@/tools/watchLocale'
+import parsePreview from '@/tools/parsePreview'
 
 import { tag } from '@/types/post'
 
 export default defineComponent({
   name: 'PostCard',
+  emits: ['open'],
   props: {
     localeString: {
       type: String,
@@ -54,31 +57,16 @@ export default defineComponent({
     tags: {
       type: Object as PropType<tag[]>,
       required: true
+    },
+    disaledTab: {
+      type: Boolean,
+      required: true
     }
   },
   setup (props) {
     const { localeName, locale, t, tf, tDate } = i18n()
-
-    const pEle = new DOMParser().parseFromString(toRef(props, 'content').value, 'text/html').body.getElementsByTagName('p')[0]
-
-    let readingTime: string | null = null
-    const readingTimeEle = pEle.getElementsByClassName('rt-reading-time')
-    if (readingTimeEle.length === 1) {
-      const readingTimeParsed = readingTimeEle[0].textContent?.trim().split(': ') || []
-      if (readingTimeParsed.length === 2) {
-        readingTime = readingTimeParsed[readingTimeParsed.length - 1].replace('minute', 'min').replace('hour', 'hr')
-      }
-
-      if (readingTimeEle[0].parentNode !== null) {
-        pEle.removeChild(readingTimeEle[0])
-      }
-    }
-
-    const contentText = pEle.textContent?.replace(/\.{0,1} \[…\]/, '…').trim() || ''
-
-    onMounted(() => {
-      localeName.value = toRef(props, 'localeString').value
-    })
+    watchLocale(toRef(props, 'localeString'), localeName)
+    const { readingTime, contentText } = parsePreview(toRef(props, 'content'))
 
     return {
       localeName,
@@ -95,8 +83,8 @@ export default defineComponent({
 
 <style scoped lang="less">
 .card {
-  width: 85%;
-  max-width: 600px;
+  width: 92%;
+  max-width: 700px;
   border: 3px solid #202020;
   margin: 10px auto;
   color: #202020;
@@ -118,7 +106,7 @@ export default defineComponent({
         width: 100%;
         height: 100%;
         transition: opacity .3s;
-        &.lazyloading {
+        &.lazyload, &.lazyloading {
           opacity: 0;
         }
         &.lazyloaded {
@@ -126,7 +114,11 @@ export default defineComponent({
         }
       }
     }
-    &:focus:not(:active):not(.focus-visible) {
+    &.focus-visible:focus {
+      h1 {
+        padding-left: 30px;
+        text-decoration: underline;
+      }
       & + .reading-time {
         display: inline-block;
       }
@@ -158,6 +150,7 @@ export default defineComponent({
     font-size: 22px;
     transition: padding .2s;
     display: table;
+    word-break: break-word;
     &:hover {
       text-decoration: underline;
       padding-left: 30px;
@@ -167,6 +160,7 @@ export default defineComponent({
     padding: 0 20px;
     margin: 15px 0;
     font-size: 16px;
+    word-break: break-word;
   }
   footer {
     padding: 0 20px;
@@ -220,7 +214,7 @@ export default defineComponent({
         margin-top: 0;
         font-size: 25px;
       }
-      &:hover, &:focus:not(.focus-visible) {
+      &:hover, &.focus-visible:focus {
         h1 {
           padding-left: 30px;
           padding-right: 10px;
@@ -270,7 +264,7 @@ body.dark .card {
   }
   &.no-img{
     .reading-time {
-      background-color: #333333;
+      background-color: #CCCCCC;
     }
   }
 }
