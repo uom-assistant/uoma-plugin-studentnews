@@ -3,8 +3,9 @@
     <a href="https://studentnews.manchester.ac.uk/" target="_blank" rel="noopener noreferrer" :tabindex="showPostView ? '-1' : ''">My <span>Manchester</span> News</a>
     <div class="mode-switch">
       <div>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" class="mode-icon mode-card" :class="{ active: viewMode === 'card' }" @click="changeModeTo('card')" @keypress.enter="changeModeTo('card')" :tabindex="showPostView ? '-1' : '0'"><title>{{ t('cardView') }}</title><path fill="#BBB" d="M0 0h474v1024H0zm550 0h474v1024H550z"/></svg>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" class="mode-icon mode-list" :class="{ active: viewMode === 'list' }" @click="changeModeTo('list')" @keypress.enter="changeModeTo('list')" :tabindex="showPostView ? '-1' : '0'"><title>{{ t('listView') }}</title><path fill="#BBB" d="M85 597h171V427H85v170zm0 256h171V683H85v170zm0-512h171V171H85v170zm256 256h598V427H341v170zm0 256h598V683H341v170zm0-682v170h598V171H341z"/></svg>
+        <svg viewBox="0 0 1024 1024" class="mode-icon mode-card" :class="{ active: viewMode === 'card' }" @click="changeModeTo('card')" @keypress.enter="changeModeTo('card')" :tabindex="showPostView ? '-1' : '0'"><title>{{ t('cardView') }}</title><path fill="#BBB" d="M0 0h474v1024H0zm550 0h474v1024H550z"/></svg>
+        <svg viewBox="0 0 1024 1024" class="mode-icon mode-list" :class="{ active: viewMode === 'list' }" @click="changeModeTo('list')" @keypress.enter="changeModeTo('list')" :tabindex="showPostView ? '-1' : '0'"><title>{{ t('listView') }}</title><path fill="#BBB" d="M85 597h171V427H85v170zm0 256h171V683H85v170zm0-512h171V171H85v170zm256 256h598V427H341v170zm0 256h598V683H341v170zm0-682v170h598V171H341z"/></svg>
+        <svg viewBox="0 0 1024 1024" class="mode-icon mode-refresh" :class="{ loading: loading && !error }" @click="refresh" @keypress.enter="refresh" :tabindex="showPostView ? '-1' : '0'"><title>{{ t('refresh') }}</title><path fill="#BBB" d="M832 704l192-224H895a385 385 0 00-313-346h-5l-3-1c-20-3-41-5-62-5h-1a384 384 0 00-373 297l-2 7v3l-1 4-1 5v2l-2 8c-2 13-3 25-3 38v2l-1 8v20l1 8v2c0 13 2 26 3 38v1l2 7v2l1 5 1 4v3l2 7a385 385 0 00374 297c86 0 166-28 234-81l15-12-87-93-12 10a256 256 0 11-150-464c133 0 246 93 259 224H624l208 224z"/></svg>
       </div>
     </div>
   </header>
@@ -59,7 +60,7 @@ export default defineComponent({
   },
   setup () {
     const { localeName, locale, t, tf, tDate } = i18n()
-    const { postList, page, loading, error, noMore, loadNextPage } = loadPosts()
+    const { postList, page, loading, error, noMore, loadNextPage, refresh } = loadPosts()
     const { viewMode, changeModeTo } = postListView()
     const { dark } = darkMode()
     const { showPostView, showPostViewAnimation, postViewScroll, selectedPost, openPost, closePost, openedIndex, previous, next } = viewPost(postList, noMore, loadNextPage)
@@ -83,6 +84,7 @@ export default defineComponent({
       error,
       noMore,
       loadNextPage,
+      refresh,
       viewMode,
       changeModeTo,
       dark,
@@ -101,6 +103,14 @@ export default defineComponent({
 </script>
 
 <style lang="less">
+@keyframes spinning {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 body {
   margin: 0;
   font-family: "Source Sans Pro", -apple-system, Noto Sans, Helvetica Neue, Helvetica, Nimbus Sans L, Arial, Liberation Sans, PingFang SC, Hiragino Sans GB, Noto Sans CJK SC, Source Han Sans SC, Source Han Sans CN, Microsoft YaHei, Wenquanyi Micro Hei, WenQuanYi Zen Hei, ST Heiti, SimHei, WenQuanYi Zen Hei Sharp, sans-serif;
@@ -147,7 +157,7 @@ body {
         text-align: center;
         background-color: #E6E6E6;
         height: 34px;
-        width: 80px;
+        width: 124px;
         .mode-icon {
           display: inline-block;
           cursor: pointer;
@@ -167,6 +177,18 @@ body {
         .mode-list {
           width: 24px;
           height: 24px;
+          padding-right: 12px;
+          border-right: 2px solid #D2D2D2;
+        }
+        .mode-refresh {
+          padding-left: 9.5px;
+          margin-right: -3px;
+          width: 23px;
+          height: 24px;
+          transform-origin: 21.1px 12.3px;
+          &.loading {
+            animation: spinning 1s infinite linear;
+          }
         }
       }
     }
@@ -262,6 +284,9 @@ body {
                 fill: #EEEEEE;
               }
             }
+          }
+          .mode-list {
+            border-right-color: #4B4B4B;
           }
         }
       }

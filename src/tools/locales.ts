@@ -25,7 +25,8 @@ const languageList: languageList = {
       shareToFacebook: 'Share to Facebook',
       shareToTwitter: 'Share to Twitter',
       loadError: 'Failed to load',
-      retry: 'Retry'
+      retry: 'Retry',
+      refresh: 'Refresh'
     }
   },
   zh: {
@@ -52,7 +53,8 @@ const languageList: languageList = {
       shareToFacebook: '分享到 Facebook',
       shareToTwitter: '分享到 Twitter',
       loadError: '加载失败',
-      retry: '重试'
+      retry: '重试',
+      refresh: '刷新'
     }
   }
 }

@@ -8,7 +8,8 @@ type loadPosts = {
   loading: Ref<boolean>,
   error: Ref<boolean>,
   noMore: Ref<boolean>,
-  loadNextPage: (focus: boolean) => Promise<void>
+  loadNextPage: (focus: boolean) => Promise<void>,
+  refresh: () => Promise<void>,
 }
 
 /**
@@ -119,6 +120,96 @@ export default (): loadPosts => {
     }
   }
 
+  /**
+   * Refrsh the post list and looking for new posts
+   * @returns Promise for the loading requesting
+   */
+  const refresh = async (): Promise<void> => {
+    if (loading.value) {
+      return
+    }
+
+    loading.value = true
+
+    // Send request
+    const response = await fetch('https://studentnews.manchester.ac.uk/wp-json/wp/v2/posts?_fields=id,date,title,link,excerpt,_links,_embedded&_embed=1&page=1', {
+      credentials: 'omit'
+    }).then((response) => response.json()).catch(() => {
+      loading.value = false
+      return false
+    })
+
+    if (!response) {
+      return
+    }
+
+    loading.value = false
+
+    // Looking for existing posts
+    let findFlag = false
+    const newList: post[] = []
+
+    for (const item of response) {
+      if (postList.value.find((val) => val.id === item.id) === undefined) {
+        const tags: tag[] = []
+
+        if (item._embedded['wp:term'] && item._embedded['wp:term'][0]) {
+          for (const tag of item._embedded['wp:term'][0]) {
+            tags.push({
+              name: tag.name,
+              link: tag.link
+            })
+          }
+        }
+
+        // Get authors
+        const authors: author[] = []
+
+        if (item._embedded.author) {
+          for (const author of item._embedded.author) {
+            authors.push({
+              name: author.name,
+              link: author.link,
+              description: author.description,
+              avatar: (Object.values(author.avatar_urls)[Object.values(author.avatar_urls).length - 1] as string).replace(/(\?|&)s=\d{1,2}/, 's=256') || ''
+            })
+          }
+        }
+
+        // Add a new post to the list
+        newList.push({
+          id: item.id,
+          title: item.title.rendered,
+          href: item.link,
+          link: item._links.self[0]?.href || '',
+          img: {
+            src: item._embedded['wp:featuredmedia'] && item._embedded['wp:featuredmedia'][0] && item._embedded['wp:featuredmedia'][0].source_url ? item._embedded['wp:featuredmedia'][0].source_url : '',
+            caption: item._embedded['wp:featuredmedia'] && item._embedded['wp:featuredmedia'][0] && item._embedded['wp:featuredmedia'][0].caption && item._embedded['wp:featuredmedia'][0].caption.rendered ? item._embedded['wp:featuredmedia'][0].caption.rendered : ''
+          },
+          date: item.date,
+          content: item.excerpt.rendered,
+          authors,
+          tags
+        })
+      } else {
+        findFlag = true
+        break
+      }
+    }
+
+    if (findFlag) {
+      // We found an existing post, combine all new posts to the head of the post list
+      postList.value = newList.concat(postList.value)
+    } else {
+      // May have more than 10 new posts, just refresh the whole post list
+      postList.value = []
+      page.value = 1
+      noMore.value = false
+
+      loadNextPage()
+    }
+  }
+
   // Load the first page when mounted
   onMounted(loadNextPage)
 
@@ -128,6 +219,7 @@ export default (): loadPosts => {
     loading,
     error,
     noMore,
-    loadNextPage
+    loadNextPage,
+    refresh
   }
 }
