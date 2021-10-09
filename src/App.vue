@@ -28,8 +28,8 @@
   </footer>
 </template>
 
-<script lang="ts">
-import { defineComponent, onMounted } from 'vue'
+<script setup lang="ts">
+import { onMounted } from 'vue'
 import 'lazysizes'
 import 'focus-visible'
 
@@ -49,56 +49,17 @@ import viewPost from './tools/viewPost'
 
 import localeList from '@/tools/locales'
 
-export default defineComponent({
-  name: 'App',
-  components: {
-    PostCard,
-    PostText,
-    LoadingBar,
-    PostView,
-    Error
-  },
-  setup () {
-    const { localeName, locale, t, tf, tDate } = i18n()
-    const { postList, page, loading, error, noMore, loadNextPage, refresh } = loadPosts()
-    const { viewMode, changeModeTo } = postListView()
-    const { dark } = darkMode()
-    const { showPostView, showPostViewAnimation, postViewScroll, selectedPost, openPost, closePost, openedIndex, previous, next } = viewPost(postList, noMore, loadNextPage)
+const { localeName, t } = i18n()
+const { postList, loading, error, noMore, loadNextPage, refresh } = loadPosts()
+const { viewMode, changeModeTo } = postListView()
+const { dark } = darkMode()
+const { showPostView, showPostViewAnimation, postViewScroll, selectedPost, openPost, closePost, openedIndex, previous, next } = viewPost(postList, noMore, loadNextPage)
 
-    onMounted(() => {
-      // Read initial settings from URl query
-      const urlParams = new URLSearchParams(window.location.search)
-      localeName.value = localeList[urlParams.get('locale') || 'en'] ? (urlParams.get('locale') || 'en') : 'en'
-      dark.value = (urlParams.get('dark') || 'false') === 'true'
-    })
-
-    return {
-      localeName,
-      locale,
-      t,
-      tf,
-      tDate,
-      postList,
-      page,
-      loading,
-      error,
-      noMore,
-      loadNextPage,
-      refresh,
-      viewMode,
-      changeModeTo,
-      dark,
-      showPostView,
-      showPostViewAnimation,
-      postViewScroll,
-      selectedPost,
-      openPost,
-      closePost,
-      openedIndex,
-      previous,
-      next
-    }
-  }
+onMounted(() => {
+  // Read initial settings from URl query
+  const urlParams = new URLSearchParams(window.location.search)
+  localeName.value = localeList[urlParams.get('locale') || 'en'] ? (urlParams.get('locale') || 'en') : 'en'
+  dark.value = (urlParams.get('dark') || 'false') === 'true'
 })
 </script>
 
