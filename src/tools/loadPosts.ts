@@ -1,4 +1,5 @@
 import { nextTick, onMounted, ref, Ref } from 'vue'
+import sanitizeHtml from 'sanitize-html'
 
 import { post, tag, author } from '@/types/post'
 
@@ -86,7 +87,11 @@ export default (): loadPosts => {
       // Add a new post to the list
       postList.value.push({
         id: item.id,
-        title: item.title.rendered,
+        title: sanitizeHtml(item.title.rendered, {
+          allowedTags: [],
+          allowedAttributes: {},
+          enforceHtmlBoundary: true
+        }),
         href: item.link,
         link: item._links.self[0]?.href || '',
         img: {
