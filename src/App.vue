@@ -60,6 +60,22 @@ onMounted(() => {
   const urlParams = new URLSearchParams(window.location.search)
   localeName.value = localeList[urlParams.get('locale') || 'en'] ? (urlParams.get('locale') || 'en') : 'en'
   dark.value = (urlParams.get('dark') || 'false') === 'true'
+
+  const parentOrigin = urlParams.get('origin') || ''
+
+  window.addEventListener('message', (event) => {
+    if (event.origin !== parentOrigin) {
+      return
+    }
+    const data = JSON.parse(event.data)
+    for (const action of data) {
+      if (action.type === 'dark') {
+        dark.value = action.payload
+      } else if (action.type === 'locale') {
+        localeName.value = localeList[action.payload] ? action.payload : 'en'
+      }
+    }
+  }, false)
 })
 </script>
 

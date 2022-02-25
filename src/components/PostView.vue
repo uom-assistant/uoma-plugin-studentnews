@@ -39,7 +39,7 @@
       <div>
         <a v-for="(tag, index) in tags" :key="index" :href="tag.link" target="_blank" rel="noopener noreferrer"><span>{{ tag.name }}</span></a>
       </div>
-      <time :datetime="date">{{ tf('published', tDate(new Date(date))) }}</time>
+      <time :datetime="date">{{ tf('published', [tDate(new Date(date))]) }}</time>
     </div>
     <aside v-if="authors.length > 0 && !loading && !error" class="author">
       <div>

@@ -10,8 +10,8 @@ type viewPost = {
   openPost: (index: number) => void,
   closePost: () => void,
   openedIndex: Ref<number>,
-  previous: ComputedRef<postPreview | null>,
-  next: ComputedRef<postPreview | null>
+  previous: ComputedRef<postPreview | undefined>,
+  next: ComputedRef<postPreview | undefined>
 }
 
 /**
@@ -89,7 +89,7 @@ export default (postList: Ref<post[]>, noMore: Ref<boolean>, loadNextPage: (focu
   }
 
   // The previous post of the currently opened post or null
-  const previous = computed((): postPreview | null => {
+  const previous = computed((): postPreview | undefined => {
     if (postList.value.length >= openedIndex.value + 2) {
       const nextPost = postList.value[openedIndex.value + 1]
       return {
@@ -103,7 +103,7 @@ export default (postList: Ref<post[]>, noMore: Ref<boolean>, loadNextPage: (focu
     // No previous post any more
     if (noMore.value) {
       // Current post is the latest post, no next post
-      return null
+      return undefined
     }
 
     // We can load next page of the post list for the previous post, so return a empty post and waut for loaing
@@ -116,7 +116,7 @@ export default (postList: Ref<post[]>, noMore: Ref<boolean>, loadNextPage: (focu
   })
 
   // The next post of the currently opened post or null
-  const next = computed((): postPreview | null => {
+  const next = computed((): postPreview | undefined => {
     if (openedIndex.value > 0) {
       const previousPost = postList.value[openedIndex.value - 1]
       return {
@@ -127,7 +127,7 @@ export default (postList: Ref<post[]>, noMore: Ref<boolean>, loadNextPage: (focu
       }
     }
     // Current post is the latest post, no next post
-    return null
+    return undefined
   })
 
   return {
